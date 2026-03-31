@@ -97,12 +97,11 @@
             statusMsg.style.display = 'block';
 
             try {
-                const response = await fetch('http://localhost:5000/perguntar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pergunta, modelo: modeloSelecionado })
-                });
-
+                const response = await fetch('http://localhost:3000/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pergunta: textoDaPergunta }) // O servidor novo espera "pergunta"
+});
                 const data = await response.json();
                 statusMsg.style.display = 'none';
 
@@ -117,5 +116,6 @@
             }
         }
     </script>
+    <script src="index.js"></script>
 </body>
 </html>

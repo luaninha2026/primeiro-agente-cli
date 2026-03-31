@@ -8,11 +8,19 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SEU-USUARIO/primeiro-agente-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SEU-USUARIO/primeiro-agente-cli/issues"
+  },
+  "homepage": "https://github.com/SEU-USUARIO/primeiro-agente-cli#readme",
+  "description": ""
 }
