@@ -47,8 +47,7 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // 5. Ligar o Servidor na porta 3000
-const PORTA = 3000;
+const PORTA = process.env.PORT || 3000;
 app.listen(PORTA, () => {
-    console.log(`🚀 Servidor da IA rodando em http://localhost:${PORTA}`);
-    console.log(`📡 Rota disponível: POST http://localhost:${PORTA}/api/chat`);
+    console.log(`🚀 Servidor rodando na porta ${PORTA}`);
 });
