@@ -36,34 +36,43 @@ app.post('/api/chat', async (req, res) => {
         const { pergunta } = req.body;
         if (!pergunta) return res.status(400).json({ erro: "Envie uma pergunta." });
 
-        // 1. Salva a pergunta do usuário no Banco de Dados
+        // 1. Salva a pergunta do usuário no Banco
         await Mensagem.create({ role: "user", parts: [{ text: pergunta }] });
 
-        // 2. Busca o histórico de conversas no Banco (limitado às últimas 20 mensagens)
-        // Ocultamos o ID e a data, pois o Gemini só quer saber de 'role' e 'parts'
-        const historico = await Mensagem.find()
-                                        .select('role parts -_id') 
+        // 2. Busca o histórico e USA O .lean() para vir como objeto puro, sem "lixo" do banco
+        const mensagensBanco = await Mensagem.find()
                                         .sort({ dataHora: 1 })
-                                        .limit(20);
+                                        .limit(20)
+                                        .lean(); 
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // 3. LIMPEZA TOTAL: Monta o histórico EXATAMENTE como o Gemini quer
+        const historicoLimpo = mensagensBanco.map(m => ({
+            role: m.role === "user" ? "user" : "model",
+            parts: [{ text: m.parts[0].text }] // Pega apenas o texto, ignora IDs
+        }));
+
+        // 4. Configura o modelo e inicia o chat
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // Remove a última mensagem do histórico para não enviar duplicado (já que vamos dar sendMessage nela)
+        const historyParaIA = historicoLimpo.slice(0, -1);
+
         const chat = model.startChat({
-            history: historico // O Gemini lê isso e "lembra" do que conversaram
+            history: historyParaIA
         });
 
-        // 4. Manda a nova pergunta para a IA
+        // 5. Envia a pergunta atual
         const result = await chat.sendMessage(pergunta);
         const respostaDaIA = result.response.text();
 
-        // 5. Salva a resposta da IA no Banco de Dados para uso futuro
+        // 6. Salva a resposta da IA no Banco
         await Mensagem.create({ role: "model", parts: [{ text: respostaDaIA }] });
 
-        // 6. Devolve a resposta para o Front-end
         return res.status(200).json({ sucesso: true, resposta: respostaDaIA });
 
     } catch (erro) {
-        console.error("❌ Erro:", erro);
-        return res.status(500).json({ erro: "Amnésia do servidor. Erro interno." });
+        console.error("❌ Erro detalhado:", erro);
+        return res.status(500).json({ erro: "Erro ao processar mensagem." });
     }
 });
 
