@@ -46,8 +46,7 @@ app.post('/api/chat', async (req, res) => {
                                         .sort({ dataHora: 1 })
                                         .limit(20);
 
-        // 3. Inicia o chat do Gemini, ENVIANDO O HISTÓRICO JUNTO!
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const chat = model.startChat({
             history: historico // O Gemini lê isso e "lembra" do que conversaram
         });
