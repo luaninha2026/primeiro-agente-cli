@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>IA Chat Profissional</title>
+    <!-- 1. CDN do Marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .chat-container { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .historico { height: 400px; overflow-y: auto; background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #ddd; }
+        .mensagem { margin-bottom: 15px; padding: 10px 15px; border-radius: 10px; line-height: 1.5; }
+        .user { background: #007bff; color: white; margin-left: 20%; text-align: right; }
+        .bot { background: #e9ecef; color: #333; margin-right: 20%; }
+        /* Estilização para o Markdown dentro do bot */
+        .bot p { margin: 0; }
+        .bot code { background: #f1f1f1; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+        
+        .controles { display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 8px; outline: none; }
+        button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-limpar { background: #dc3545; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h2>🤖 Assistente IA</h2>
+        <div class="historico" id="historico"></div>
+        <div class="controles">
+            <input type="text" id="pergunta" placeholder="Digite sua pergunta..." onkeypress="if(event.key==='Enter') enviarMensagem()">
+            <button onclick="enviarMensagem()">Enviar</button>
+        </div>
+        <!-- 2. Botão de Limpar -->
+        <button class="btn-limpar" onclick="limparConversa()">🗑️ Limpar Conversa</button>
+    </div>
+
+    <script>
+        // 1. Configure aqui a URL correta (Local para testes ou Render para produção)
+// Teste local: "http://localhost:3000/api/chat"
+// Produção: "https://primeiro-agente-cli.onrender.com/api/chat"
+const URL_BACKEND = "https://primeiro-agente-cli.onrender.com/api/chat";
+
+async function enviarMensagem() {
+    const input = document.getElementById("pergunta");
+    const historico = document.getElementById("historico");
+    const texto = input.value.trim();
+
+    // Este return está correto porque está DENTRO da função
+    if (!texto) return;
+
+    // Adiciona mensagem do usuário na tela
+    historico.innerHTML += `<div class="mensagem user">${texto}</div>`;
+    input.value = "";
+
+    // Cria o elemento de carregamento
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "mensagem bot";
+    loadingDiv.innerText = "Pensando...";
+    historico.appendChild(loadingDiv);
+    
+    // Rola para baixo
+    historico.scrollTop = historico.scrollHeight;
+
+    try {
+        const resposta = await fetch(URL_BACKEND, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pergunta: texto })
+        });
+
+        if (!resposta.ok) throw new Error("Erro na resposta do servidor");
+
+        const dados = await resposta.json();
+        
+        // Remove o "Pensando..."
+        loadingDiv.remove();
+
+        // Converte Markdown para HTML e exibe
+        const respostaFormatada = marked.parse(dados.resposta);
+        historico.innerHTML += `<div class="mensagem bot">${respostaFormatada}</div>`;
+
+   } catch (erro) {
+        console.error("Erro detalhado:", erro);
+        loadingDiv.innerHTML = "Erro 500: O servidor quebrou. Olhe os Logs no Render! ❌";
+        loadingDiv.style.backgroundColor = "#ffcccc";
+    }
+    
+    historico.scrollTop = historico.scrollHeight;
+}
+
+async function limparConversa() {
+    // Este return também está correto aqui dentro
+    if (!confirm("Deseja apagar todo o histórico de mensagens?")) return;
+
+    try {
+        const resposta = await fetch(`${URL_BACKEND}/limpar`, {
+            method: "DELETE"
+        });
+
+        if (resposta.ok) {
+            document.getElementById("historico").innerHTML = "";
+            alert("Histórico limpo!");
+        } else {
+            alert("Erro ao limpar o histórico no servidor.");
+        }
+    } catch (erro) {
+        console.error("Erro ao limpar:", erro);
+        alert("Erro de conexão ao tentar limpar.");
+    }
+}
+    </script>
+</body>
+</html>

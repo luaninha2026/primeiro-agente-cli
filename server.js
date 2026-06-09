@@ -52,7 +52,7 @@ app.post('/api/chat', async (req, res) => {
         }));
 
         // 4. Configura o modelo e inicia o chat
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         
         // Remove a última mensagem do histórico para não enviar duplicado (já que vamos dar sendMessage nela)
         const historyParaIA = historicoLimpo.slice(0, -1);
