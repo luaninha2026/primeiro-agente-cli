@@ -2,63 +2,112 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Chatbot na Nuvem</title>
+    <title>Cofre do Conhecimento - IA</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .chat-container { background: white; width: 400px; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .historico { height: 300px; overflow-y: auto; background: #eef2f3; padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-        .mensagem { margin-bottom: 10px; padding: 8px; border-radius: 5px; }
-        .user { background: #007bff; color: white; text-align: right; }
-        .bot { background: #ddd; color: black; text-align: left; }
-        input { width: 75%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { width: 20%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { background: #16213e; width: 450px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .nickname-section { margin-bottom: 15px; display: flex; gap: 10px; }
+        .historico { height: 350px; overflow-y: auto; background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #4e4eef; }
+        .mensagem { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; }
+        .user { background: #4e4eef; align-self: flex-end; margin-left: auto; }
+        .bot { background: #008080; }
+        input { padding: 10px; border-radius: 5px; border: none; outline: none; }
+        #pergunta { width: 70%; }
+        button { padding: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #ff2e63; }
+        .ranking-area { margin-top: 20px; width: 450px; display: none; background: #16213e; padding: 15px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #0f3460; }
+        .ouro { color: #ffd700; font-weight: bold; }
     </style>
 </head>
 <body>
- <div class="chat-container">
-        <h2>🤖 Assistente IA</h2>
-        <div class="historico" id="historico"></div>
-        <div>
-            <input type="text" id="pergunta" placeholder="Digite sua pergunta...">
-            <button onclick="enviarMensagem()">Enviar</button>
+
+    <div class="container">
+        <h2>🛡️ Guardião do Cofre</h2>
+        
+        <div class="nickname-section">
+            <input type="text" id="nickname" placeholder="Seu Nickname..." maxlength="15">
+            <button onclick="buscarRanking()">🏆 Ranking</button>
+        </div>
+
+        <div class="historico" id="historico">
+            <div class="mensagem bot">Saudações! Digite seu apelido e tente decifrar meus enigmas para ganhar XP!</div>
+        </div>
+
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="pergunta" placeholder="Sua resposta/pergunta...">
+            <button onclick="enviar()">Enviar</button>
         </div>
     </div>
 
+    <div id="ranking-area" class="ranking-area">
+        <h3>🏆 Top 10 Conhecedores</h3>
+        <table id="tabela-ranking">
+            <thead>
+                <tr>
+                    <th>Pos</th>
+                    <th>Jogador</th>
+                    <th>XP</th>
+                </tr>
+            </thead>
+            <tbody id="corpo-ranking"></tbody>
+        </table>
+    </div>
+
     <script>
-        // COLE A URL DO SEU RENDER AQUI (mantenha o /api/chat no final)
-        const URL_BACKEND = "https://primeiro-agente-cli.onrender.com/api/chat";
+        const API_URL = "https://primeiro-agente-cli.onrender.com"; // Mude para a URL do Render no deploy
 
-        async function enviarMensagem() {
+        async function enviar() {
+            const nick = document.getElementById("nickname").value;
             const input = document.getElementById("pergunta");
-            const historico = document.getElementById("historico");
-            const texto = input.value;
+            const hist = document.getElementById("historico");
 
-            if(!texto) return;
+            if(!nick) return alert("Digite um nickname primeiro!");
+            if(!input.value) return;
 
-            // 1. Mostra a mensagem do usuário na tela
-            historico.innerHTML += `<div class="mensagem user">${texto}</div>`;
+            const userText = input.value;
+            hist.innerHTML += `<div class="mensagem user">${userText}</div>`;
             input.value = "";
-            historico.innerHTML += `<div class="mensagem bot" id="loading">Pensando...</div>`;
+            hist.scrollTop = hist.scrollHeight;
 
             try {
-                // 2. Faz o Fetch (POST) para a SUA API na Nuvem
-                const resposta = await fetch(URL_BACKEND, {
+                const res = await fetch(`${API_URL}/api/chat`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pergunta: texto })
+                    body: JSON.stringify({ pergunta: userText, nickname: nick })
                 });
+                const dados = await res.json();
+                hist.innerHTML += `<div class="mensagem bot">${dados.resposta}</div>`;
+                hist.scrollTop = hist.scrollHeight;
+            } catch (e) {
+                alert("Erro ao falar com o Guardião.");
+            }
+        }
 
-                const dados = await resposta.json();
+        async function buscarRanking() {
+            const area = document.getElementById("ranking-area");
+            const corpo = document.getElementById("corpo-ranking");
+            area.style.display = "block";
 
-                // 3. Remove o "Pensando..." e mostra a resposta real
-                document.getElementById("loading").remove();
-                historico.innerHTML += `<div class="mensagem bot">${dados.resposta}</div>`;
+            try {
+                const res = await fetch(`${API_URL}/api/ranking`);
+                const jogadores = await res.json();
                 
-                // Rola o chat para baixo
-                historico.scrollTop = historico.scrollHeight;
-
-            } catch (erro) {
-                document.getElementById("loading").innerHTML = "Erro de conexão com o Servidor ❌";
+                corpo.innerHTML = "";
+                jogadores.forEach((j, index) => {
+                    const isPrimeiro = index === 0 ? "class='ouro'" : "";
+                    const medalha = index === 0 ? "🥇" : index + 1;
+                    corpo.innerHTML += `
+                        <tr ${isPrimeiro}>
+                            <td>${medalha}</td>
+                            <td>${j.nome}</td>
+                            <td>${j.xp}</td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error("Erro ranking");
             }
         }
     </script>
