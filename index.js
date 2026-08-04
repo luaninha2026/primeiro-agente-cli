@@ -16,8 +16,6 @@ app.post('/perguntar', async (req, res) => {
     // Recebe a pergunta e o modelo escolhido
     const { pergunta, modelo } = req.body;
     
-    // Mapeamento: se o usuário escolher 2.5 ou 3.0, usamos o 1.5-flash para não dar erro
-    // Já que as versões 2.5 e 3.0 ainda não foram lançadas pelo Google.
     let modelName = "gemini-3-flash-preview"; 
     if (modelo === "gemini-2.5-pro") modelName = "gemini-2.5-pro";
     if (modelo === "gemini-3.0-pro") modelName = "gemini-3.0-pro";

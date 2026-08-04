@@ -2,48 +2,85 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Cofre do Conhecimento - IA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cofre do Conhecimento - SaaS Seguro</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .container { background: #16213e; width: 450px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .nickname-section { margin-bottom: 15px; display: flex; gap: 10px; }
-        .historico { height: 350px; overflow-y: auto; background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #4e4eef; }
-        .mensagem { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; }
+        
+        /* Telas de Autenticação */
+        #auth-section { display: block; }
+        #chat-section { display: none; } /* Escondido até logar */
+
+        .auth-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; border: 1px solid #4e4eef; border-radius: 10px; }
+        .auth-form h3 { margin-top: 0; color: #e94560; }
+
+        /* Estilos do Chat */
+        .historico { height: 300px; overflow-y: auto; background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #4e4eef; }
+        .mensagem { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
         .user { background: #4e4eef; align-self: flex-end; margin-left: auto; }
         .bot { background: #008080; }
-        input { padding: 10px; border-radius: 5px; border: none; outline: none; }
-        #pergunta { width: 70%; }
-        button { padding: 10px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        input { padding: 12px; border-radius: 5px; border: none; outline: none; background: #fff; color: #333; }
+        button { padding: 12px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         button:hover { background: #ff2e63; }
-        .ranking-area { margin-top: 20px; width: 450px; display: none; background: #16213e; padding: 15px; border-radius: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .btn-secondary { background: #4e4eef; margin-top: 5px; }
+
+        .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; }
+        
+        .ranking-area { margin-top: 20px; width: 450px; background: #16213e; padding: 15px; border-radius: 10px; display: none; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { padding: 8px; text-align: left; border-bottom: 1px solid #0f3460; }
         .ouro { color: #ffd700; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>🛡️ Guardião do Cofre</h2>
+    <!-- FASE 6: TELA DE LOGIN E CADASTRO -->
+    <div id="auth-section" class="container">
+        <h2>🛡️ Acesso ao Cofre</h2>
         
-        <div class="nickname-section">
-            <input type="text" id="nickname" placeholder="Seu Nickname..." maxlength="15">
-            <button onclick="buscarRanking()">🏆 Ranking</button>
+        <div class="auth-form" id="login-form">
+            <h3>Entrar</h3>
+            <input type="email" id="login-email" placeholder="Seu e-mail">
+            <input type="password" id="login-senha" placeholder="Sua senha">
+            <button onclick="logar()">Acessar Sistema</button>
         </div>
 
-        <div class="historico" id="historico">
-            <div class="mensagem bot">Saudações! Digite seu apelido e tente decifrar meus enigmas para ganhar XP!</div>
-        </div>
-
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="pergunta" placeholder="Sua resposta/pergunta...">
-            <button onclick="enviar()">Enviar</button>
+        <div class="auth-form">
+            <h3>Criar Conta</h3>
+            <input type="text" id="reg-nome" placeholder="Seu Nome (Nickname)">
+            <input type="email" id="reg-email" placeholder="Seu melhor e-mail">
+            <input type="password" id="reg-senha" placeholder="Crie uma senha">
+            <button onclick="cadastrar()" class="btn-secondary">Cadastrar Agora</button>
         </div>
     </div>
 
+    <!-- TELA DO CHAT (SÓ APARECE APÓS LOGIN) -->
+    <div id="chat-section" class="container">
+        <div class="user-info">
+            <span id="nome-display">Olá, Usuário</span>
+            <button onclick="logout()" style="padding: 5px 10px; font-size: 0.8em;">Sair</button>
+        </div>
+        
+        <h2>🛡️ Guardião do Cofre</h2>
+
+        <div class="historico" id="historico">
+            <div class="mensagem bot">Token validado! O Cofre está aberto. Tente decifrar meus enigmas!</div>
+        </div>
+
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="pergunta" style="flex-grow:1" placeholder="Sua resposta...">
+            <button onclick="enviar()">Enviar</button>
+        </div>
+        
+        <button onclick="buscarRanking()" class="btn-secondary" style="width:100%; margin-top:10px;">🏆 Ver Ranking Global</button>
+    </div>
+
+    <!-- ÁREA DE RANKING -->
     <div id="ranking-area" class="ranking-area">
         <h3>🏆 Top 10 Conhecedores</h3>
-        <table id="tabela-ranking">
+        <table>
             <thead>
                 <tr>
                     <th>Pos</th>
@@ -56,14 +93,70 @@
     </div>
 
     <script>
-        const API_URL = "https://primeiro-agente-cli.onrender.com"; // Mude para a URL do Render no deploy
+        // Mude para a URL do seu backend no Render quando fizer deploy
+        const API_URL = "http://localhost:3000"; 
 
+        // 1. FUNÇÃO DE CADASTRO
+        async function cadastrar() {
+            const nome = document.getElementById("reg-nome").value;
+            const email = document.getElementById("reg-email").value;
+            const senha = document.getElementById("reg-senha").value;
+
+            if(!nome || !email || !senha) return alert("Preencha todos os campos!");
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nome, email, senha })
+                });
+                const dados = await res.json();
+                
+                if(res.ok) {
+                    alert("Cadastro realizado! Agora faça login.");
+                } else {
+                    alert("Erro: " + dados.erro);
+                }
+            } catch (e) { alert("Erro ao conectar com servidor."); }
+        }
+
+        // 2. FUNÇÃO DE LOGIN
+        async function logar() {
+            const email = document.getElementById("login-email").value;
+            const senha = document.getElementById("login-senha").value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, senha })
+                });
+                const dados = await res.json();
+
+                if(dados.token) {
+                    // GUARDA O CRACHÁ (TOKEN) NO NAVEGADOR
+                    localStorage.setItem('token_saas', dados.token);
+                    localStorage.setItem('nome_usuario', dados.nome);
+                    iniciarApp();
+                } else {
+                    alert("Erro: " + dados.erro);
+                }
+            } catch (e) { alert("Erro ao logar."); }
+        }
+
+        // 3. MOSTRAR CHAT E ESCONDER LOGIN
+        function iniciarApp() {
+            document.getElementById("auth-section").style.display = "none";
+            document.getElementById("chat-section").style.display = "block";
+            document.getElementById("nome-display").innerText = "👤 " + localStorage.getItem('nome_usuario');
+        }
+
+        // 4. FUNÇÃO DE ENVIAR MENSAGEM (COM TOKEN)
         async function enviar() {
-            const nick = document.getElementById("nickname").value;
+            const token = localStorage.getItem('token_saas');
             const input = document.getElementById("pergunta");
             const hist = document.getElementById("historico");
 
-            if(!nick) return alert("Digite um nickname primeiro!");
             if(!input.value) return;
 
             const userText = input.value;
@@ -74,9 +167,15 @@
             try {
                 const res = await fetch(`${API_URL}/api/chat`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pergunta: userText, nickname: nick })
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // ENVIANDO O CRACHÁ NO HEADER
+                    },
+                    body: JSON.stringify({ pergunta: userText })
                 });
+
+                if(res.status === 401) return logout(); // Se o token expirou, desloga
+
                 const dados = await res.json();
                 hist.innerHTML += `<div class="mensagem bot">${dados.resposta}</div>`;
                 hist.scrollTop = hist.scrollHeight;
@@ -85,31 +184,39 @@
             }
         }
 
+        // 5. BUSCAR RANKING (COM TOKEN)
         async function buscarRanking() {
+            const token = localStorage.getItem('token_saas');
             const area = document.getElementById("ranking-area");
             const corpo = document.getElementById("corpo-ranking");
-            area.style.display = "block";
 
             try {
-                const res = await fetch(`${API_URL}/api/ranking`);
+                const res = await fetch(`${API_URL}/api/ranking`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
                 const jogadores = await res.json();
                 
+                area.style.display = "block";
                 corpo.innerHTML = "";
                 jogadores.forEach((j, index) => {
-                    const isPrimeiro = index === 0 ? "class='ouro'" : "";
-                    const medalha = index === 0 ? "🥇" : index + 1;
                     corpo.innerHTML += `
-                        <tr ${isPrimeiro}>
-                            <td>${medalha}</td>
+                        <tr ${index === 0 ? "class='ouro'" : ""}>
+                            <td>${index === 0 ? "🥇" : index + 1}</td>
                             <td>${j.nome}</td>
-                            <td>${j.xp}</td>
-                        </tr>
-                    `;
+                            <td>${j.xp} XP</td>
+                        </tr>`;
                 });
-            } catch (e) {
-                console.error("Erro ranking");
-            }
+            } catch (e) { alert("Erro ao carregar ranking."); }
         }
+
+        function logout() {
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        // Verifica se já está logado ao abrir a página
+        if(localStorage.getItem('token_saas')) iniciarApp();
+
     </script>
 </body>
 </html>
