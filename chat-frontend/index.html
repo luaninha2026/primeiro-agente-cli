@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cofre do Conhecimento - SaaS Seguro</title>
+    <title>Cofre do Conhecimento - Sala em Tempo Real</title>
+
+    <!-- FASE 4: Importação da biblioteca cliente do Socket.io -->
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: #16213e; width: 450px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .container { background: #16213e; width: 480px; max-width: 95vw; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         #auth-section { display: block; }
         #chat-section { display: none; } 
@@ -14,21 +18,29 @@
         .auth-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; padding: 15px; border: 1px solid #4e4eef; border-radius: 10px; }
         .auth-form h3 { margin-top: 0; color: #e94560; }
 
-        .historico { height: 300px; overflow-y: auto; background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #4e4eef; }
-        .mensagem { margin-bottom: 12px; padding: 10px; border-radius: 8px; max-width: 85%; word-wrap: break-word; }
-        .user { background: #4e4eef; align-self: flex-end; margin-left: auto; }
-        .bot { background: #008080; }
+        .historico { height: 350px; overflow-y: auto; background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #4e4eef; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Estilos dos balões de mensagens */
+        .mensagem { padding: 10px 14px; border-radius: 10px; max-width: 80%; word-wrap: break-word; font-size: 0.95em; line-height: 1.4; }
+        .msg-propria { background: #4e4eef; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .msg-outros { background: #283747; align-self: flex-start; border-bottom-left-radius: 2px; }
+        .msg-bot { background: #008080; align-self: flex-start; border-bottom-left-radius: 2px; border-left: 4px solid #00ffcc; }
+        
+        .msg-cabecalho { font-size: 0.78em; opacity: 0.85; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 8px; font-weight: bold; }
+        .msg-corpo { font-size: 0.95em; }
 
-        input { padding: 12px; border-radius: 5px; border: none; outline: none; background: #fff; color: #333; }
-        button { padding: 12px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        input { padding: 12px; border-radius: 5px; border: none; outline: none; background: #fff; color: #333; font-size: 14px; }
+        button { padding: 12px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         button:hover { background: #ff2e63; }
         .btn-secondary { background: #4e4eef; margin-top: 5px; }
+        .btn-secondary:hover { background: #3b3be0; }
 
         .user-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; }
-        .ranking-area { margin-top: 20px; width: 450px; background: #16213e; padding: 15px; border-radius: 10px; display: none; }
+        .ranking-area { margin-top: 20px; width: 480px; max-width: 95vw; background: #16213e; padding: 15px; border-radius: 10px; display: none; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #0f3460; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #0f3460; font-size: 0.9em; }
         .ouro { color: #ffd700; font-weight: bold; }
+        .dica-gemini { font-size: 11px; color: #aaa; margin-top: 6px; text-align: center; }
     </style>
 </head>
 <body>
@@ -54,20 +66,24 @@
         </div>
     </div>
 
-    <!-- TELA DO CHAT -->
+    <!-- TELA DO CHAT EM TEMPO REAL -->
     <div id="chat-section" class="container">
         <div class="user-info">
             <span id="nome-display">Olá, Usuário</span>
             <button onclick="logout()" style="padding: 5px 10px; font-size: 0.8em;">Sair</button>
         </div>
-        <h2>🛡️ Guardião do Cofre</h2>
+        <h2>🛡️ Sala Pública do Cofre</h2>
         <div class="historico" id="historico">
-            <div class="mensagem bot">Token validado! O Cofre está aberto.</div>
+            <div class="mensagem msg-bot">
+                <div class="msg-cabecalho"><span>🤖 Moderador Gemini</span><span>Sistema</span></div>
+                <div class="msg-corpo">Bem-vindo(a) à sala pública! Envie suas mensagens para conversar com todos. Para me chamar, use <b>@gemini</b> na sua mensagem.</div>
+            </div>
         </div>
         <div style="display:flex; gap:5px;">
-            <input type="text" id="pergunta" style="flex-grow:1" placeholder="Sua resposta...">
+            <input type="text" id="pergunta" style="flex-grow:1" placeholder="Converse aqui ou chame o @gemini..." onkeypress="if(event.key==='Enter') enviar()">
             <button onclick="enviar()">Enviar</button>
         </div>
+        <div class="dica-gemini">💡 Dica: Digite <b>@gemini</b> para acionar o Moderador com IA.</div>
         <button onclick="buscarRanking()" class="btn-secondary" style="width:100%; margin-top:10px;">🏆 Ver Ranking Global</button>
     </div>
 
@@ -80,10 +96,13 @@
     </div>
 
     <script>
-        // MANTENHA A URL SEM O /api NO FINAL
-        const API_URL = "https://primeiro-agente-cli.onrender.com"; 
+        // Altere para a URL do Render em produção (ex: "https://primeiro-agente-cli.onrender.com")
+        // ou deixe "http://localhost:3000" para testes locais
+        const API_URL = "http://localhost:10000"; 
 
-        // Função de Health Check
+        let socket = null;
+
+        // Health Check do servidor HTTP
         async function checkHealth() {
             const indicator = document.getElementById("status-indicator");
             try {
@@ -107,13 +126,14 @@
                     body: JSON.stringify({ nome, email, senha })
                 });
                 const dados = await res.json();
-                res.ok ? alert("Cadastro realizado!") : alert("Erro: " + dados.erro);
+                res.ok ? alert("Cadastro realizado com sucesso! Faça login.") : alert("Erro: " + dados.erro);
             } catch (e) { alert("Erro ao conectar."); }
         }
 
         async function logar() {
             const email = document.getElementById("login-email").value;
             const senha = document.getElementById("login-senha").value;
+            if(!email || !senha) return alert("Preencha e-mail e senha!");
             try {
                 const res = await fetch(`${API_URL}/api/auth/login`, {
                     method: "POST",
@@ -126,35 +146,98 @@
                     localStorage.setItem('nome_usuario', dados.nome);
                     iniciarApp();
                 } else {
-                    alert("Erro: " + dados.erro);
+                    alert("Erro: " + (dados.erro || "Falha no login"));
                 }
             } catch (e) { alert("Erro ao logar."); }
         }
 
+        // FASE 4 e 5: Inicialização e Conexão com o WebSocket autenticado
         function iniciarApp() {
             document.getElementById("auth-section").style.display = "none";
             document.getElementById("chat-section").style.display = "block";
-            document.getElementById("nome-display").innerText = "👤 " + localStorage.getItem('nome_usuario');
+            const meuNome = localStorage.getItem('nome_usuario');
+            document.getElementById("nome-display").innerText = "👤 " + meuNome;
+
+            conectarWebSocket();
         }
 
-        async function enviar() {
+        function conectarWebSocket() {
             const token = localStorage.getItem('token_saas');
+            if (!token) return logout();
+
+            // Evita criar múltiplos sockets na mesma aba
+            if (socket && socket.connected) return;
+
+            // Conexão enviando o Token JWT no handshake (Requisito de Segurança)
+            socket = io(API_URL, {
+                auth: { token: token }
+            });
+
+            socket.on("connect", () => {
+                console.log("🟢 Conectado ao servidor via WebSocket!");
+            });
+
+            // Erro de autenticação emitido pelo middleware io.use do back-end
+            socket.on("connect_error", (erro) => {
+                console.error("Erro na conexão WebSocket:", erro.message);
+                alert("Falha de autenticação no WebSocket: " + erro.message);
+                logout();
+            });
+
+            // Escuta as mensagens transmitidas para a sala
+            socket.on("mensagemRecebida", (dados) => {
+                adicionarMensagemAoHistorico(dados);
+            });
+        }
+
+        // Envia mensagem via WebSocket para o Back-end
+        function enviar() {
             const input = document.getElementById("pergunta");
-            const hist = document.getElementById("historico");
-            if(!input.value) return;
-            const userText = input.value;
-            hist.innerHTML += `<div class="mensagem user">${userText}</div>`;
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            if (!socket || !socket.connected) {
+                alert("Você não está conectado ao servidor WebSocket.");
+                return;
+            }
+
+            // Emite o evento 'novaMensagem' que o servidor está escutando
+            socket.emit("novaMensagem", texto);
+
             input.value = "";
-            try {
-                const res = await fetch(`${API_URL}/api/chat`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                    body: JSON.stringify({ pergunta: userText })
-                });
-                if(res.status === 401) return logout();
-                const dados = await res.json();
-                hist.innerHTML += `<div class="mensagem bot">${dados.resposta}</div>`;
-            } catch (e) { alert("Erro ao falar com o Guardião."); }
+            input.focus();
+        }
+
+        // Renderiza as mensagens recebidas na tela com identificação visual
+        function adicionarMensagemAoHistorico(dados) {
+            const hist = document.getElementById("historico");
+            const meuNome = localStorage.getItem('nome_usuario');
+
+            let classeTipo = "msg-outros";
+            if (dados.isBot) {
+                classeTipo = "msg-bot";
+            } else if (dados.autor === meuNome) {
+                classeTipo = "msg-propria";
+            }
+
+            const divMensagem = document.createElement("div");
+            divMensagem.className = `mensagem ${classeTipo}`;
+            divMensagem.innerHTML = `
+                <div class="msg-cabecalho">
+                    <span>${dados.autor}</span>
+                    <span>${dados.hora || ""}</span>
+                </div>
+                <div class="msg-corpo">${escapeHtml(dados.texto)}</div>
+            `;
+
+            hist.appendChild(divMensagem);
+            hist.scrollTop = hist.scrollHeight;
+        }
+
+        function escapeHtml(texto) {
+            const div = document.createElement("div");
+            div.innerText = texto;
+            return div.innerHTML;
         }
 
         async function buscarRanking() {
@@ -171,8 +254,19 @@
             } catch (e) { alert("Erro ao carregar ranking."); }
         }
 
-        function logout() { localStorage.clear(); window.location.reload(); }
-        if(localStorage.getItem('token_saas')) iniciarApp();
+        function logout() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+            }
+            localStorage.clear();
+            window.location.reload();
+        }
+
+        // Auto-login se já possuir token armazenado
+        if (localStorage.getItem('token_saas')) {
+            iniciarApp();
+        }
     </script>
 </body>
 </html>
